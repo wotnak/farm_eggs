@@ -152,6 +152,7 @@ class Eggs extends QuickFormBase {
           'units' => (string) $this->t('egg(s)'),
         ],
       ],
+      'category' => $this->createOrLoadTerm((string) $this->t('Eggs'), 'log_category'),
     ]);
 
   }
