@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\farm_eggs\EggsServiceInterface;
 use Drupal\farm_quick\Plugin\QuickForm\QuickFormBase;
 use Drupal\farm_quick\Traits\QuickLogTrait;
 use Psr\Container\ContainerInterface;
@@ -31,10 +32,13 @@ class Eggs extends QuickFormBase {
 
   /**
    * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * The eggs service.
+   */
+  protected EggsServiceInterface $eggsService;
 
   /**
    * Constructs a Eggs object.
@@ -51,6 +55,8 @@ class Eggs extends QuickFormBase {
    *   The string translation service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
+   * @param \Drupal\farm_eggs\EggsServiceInterface $eggs_service
+   *   The eggs service.
    */
   public function __construct(
     array $configuration,
@@ -59,10 +65,12 @@ class Eggs extends QuickFormBase {
     MessengerInterface $messenger,
     TranslationInterface $string_translation,
     EntityTypeManagerInterface $entity_type_manager,
+    EggsServiceInterface $eggs_service,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $messenger);
     $this->stringTranslation = $string_translation;
     $this->entityTypeManager = $entity_type_manager;
+    $this->eggsService = $eggs_service;
   }
 
   /**
@@ -81,6 +89,7 @@ class Eggs extends QuickFormBase {
       $container->get('messenger'),
       $container->get('string_translation'),
       $container->get('entity_type.manager'),
+      $container->get('farm_eggs.eggs_service'),
     );
   }
 
@@ -143,7 +152,7 @@ class Eggs extends QuickFormBase {
     // Create a new egg harvest log.
     $this->createLog([
       'type' => 'harvest',
-      'name' => $this->t('Collected @qty egg(s)', ['@qty' => $form_state->getValue('quantity')]),
+      'name' => $this->eggsService->getEggHarvestLogName(intval($form_state->getValue('quantity'))),
       'asset' => $assets,
       'quantity' => [
         [
@@ -152,7 +161,7 @@ class Eggs extends QuickFormBase {
           'units' => (string) $this->t('egg(s)'),
         ],
       ],
-      'category' => $this->createOrLoadTerm((string) $this->t('Eggs'), 'log_category'),
+      'category' => $this->eggsService->getEggsLogCategory(),
     ]);
 
   }

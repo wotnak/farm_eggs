@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Farm eggs update hooks.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Tag existing egg harvest logs with Eggs category.
+ */
+function farm_eggs_update_9001(): void {
+  $eggsCategory = \Drupal::service('farm_eggs.eggs_service')->getEggsLogCategory();
+
+  // Try to find egg harvest logs without 'Eggs' category based on log name pattern.
+  $name = (string) \Drupal::service('farm_eggs.eggs_service')->getEggHarvestLogName(0);
+  $nameParts = explode(' 0 ', $name);
+  $query = \Drupal::entityTypeManager()->getStorage('log')->getQuery();
+  $query->condition('type', 'harvest');
+  $group = $query->orConditionGroup();
+  $group->condition('category', $eggsCategory->id(), '<>');
+  $group->condition('category', NULL, 'IS NULL');
+  $query->condition($group);
+  $query->condition('name', $nameParts[0], 'STARTS_WITH');
+  $query->condition('name', $nameParts[1], 'ENDS_WITH');
+  $logsIds = $query->execute();
+  if (empty($logsIds)) {
+    return;
+  }
+
+  // Tag found egg harvest logs with eggs category.
+  /** @var \Drupal\taxonomy\TermInterface[] */
+  $logs = \Drupal::entityTypeManager()->getStorage('log')->loadMultiple($logsIds);
+  foreach ($logs as $log) {
+    $values = [];
+    if (!$log->get('category')->isEmpty()) {
+      $values = $log->get('category')->getValue();
+    }
+    $values[] = ['target_id' => $eggsCategory->id()];
+    $log->set('category', $values);
+    $log->save();
+  }
+}
