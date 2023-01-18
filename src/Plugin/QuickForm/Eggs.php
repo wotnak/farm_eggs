@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\farm_eggs\Plugin\QuickForm;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -41,6 +43,11 @@ class Eggs extends QuickFormBase {
   protected EggsServiceInterface $eggsService;
 
   /**
+   * The request timestamp.
+   */
+  protected int $requestTimestamp;
+
+  /**
    * Constructs a Eggs object.
    *
    * @param array $configuration
@@ -57,6 +64,8 @@ class Eggs extends QuickFormBase {
    *   The entity type manager service.
    * @param \Drupal\farm_eggs\EggsServiceInterface $eggs_service
    *   The eggs service.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    */
   public function __construct(
     array $configuration,
@@ -66,11 +75,13 @@ class Eggs extends QuickFormBase {
     TranslationInterface $string_translation,
     EntityTypeManagerInterface $entity_type_manager,
     EggsServiceInterface $eggs_service,
+    TimeInterface $time,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $messenger);
     $this->stringTranslation = $string_translation;
     $this->entityTypeManager = $entity_type_manager;
     $this->eggsService = $eggs_service;
+    $this->requestTimestamp = $time->getRequestTime();
   }
 
   /**
@@ -90,6 +101,7 @@ class Eggs extends QuickFormBase {
       $container->get('string_translation'),
       $container->get('entity_type.manager'),
       $container->get('farm_eggs.eggs_service'),
+      $container->get('datetime.time'),
     );
   }
 
@@ -97,6 +109,14 @@ class Eggs extends QuickFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
+
+    // Harvest timestamp.
+    $form['timestamp'] = [
+      '#type' => 'datetime',
+      '#title' => $this->t('Timestamp'),
+      '#default_value' => DrupalDateTime::createFromTimestamp($this->requestTimestamp),
+      '#required' => TRUE,
+    ];
 
     // Quantity.
     $form['quantity'] = [
@@ -152,6 +172,7 @@ class Eggs extends QuickFormBase {
     // Create a new egg harvest log.
     $this->createLog([
       'type' => 'harvest',
+      'timestamp' => $form_state->getValue('timestamp')->getTimestamp(),
       'name' => $this->eggsService->getEggHarvestLogName(intval($form_state->getValue('quantity'))),
       'asset' => $assets,
       'quantity' => [
