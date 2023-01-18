@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\farm_eggs\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
@@ -13,7 +15,7 @@ class FarmEggsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritDoc}
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames(): array {
     return [
       'farm_eggs.settings',
     ];
@@ -22,14 +24,14 @@ class FarmEggsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritDoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'farm_eggs_settings';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('farm_eggs.settings');
     $form['require_quantities_per_egg_type'] = [
       '#type' => 'checkbox',
@@ -44,7 +46,7 @@ class FarmEggsSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $this->config('farm_eggs.settings')
       ->set('require_quantities_per_egg_type', $form_state->getValue('require_quantities_per_egg_type'))
       ->save();

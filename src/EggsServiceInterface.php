@@ -34,4 +34,9 @@ interface EggsServiceInterface {
    */
   public function getEggTypes(): array;
 
+  /**
+   * Checks if 'Require quantities per egg type' option enabled.
+   */
+  public function requireQuantitiesPerEggType(): bool;
+
 }

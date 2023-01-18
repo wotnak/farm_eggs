@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\farm_eggs\Plugin\QuickForm;
 
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -49,11 +48,6 @@ class Eggs extends QuickFormBase {
   protected int $requestTimestamp;
 
   /**
-   * Determines if quantities per egg type should be required.
-   */
-  protected bool $requireQuantitiesPerEggType;
-
-  /**
    * Constructs a Eggs object.
    *
    * @param array $configuration
@@ -82,14 +76,12 @@ class Eggs extends QuickFormBase {
     EntityTypeManagerInterface $entity_type_manager,
     EggsServiceInterface $eggs_service,
     TimeInterface $time,
-    ConfigFactoryInterface $config_factory,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $messenger);
     $this->stringTranslation = $string_translation;
     $this->entityTypeManager = $entity_type_manager;
     $this->eggsService = $eggs_service;
     $this->requestTimestamp = $time->getRequestTime();
-    $this->requireQuantitiesPerEggType = (bool) $config_factory->get('farm_eggs.settings')->get('require_quantities_per_egg_type');
   }
 
   /**
@@ -110,7 +102,6 @@ class Eggs extends QuickFormBase {
       $container->get('entity_type.manager'),
       $container->get('farm_eggs.eggs_service'),
       $container->get('datetime.time'),
-      $container->get('config.factory'),
     );
   }
 
@@ -128,15 +119,13 @@ class Eggs extends QuickFormBase {
     ];
 
     // Quantity.
-    if (!$this->requireQuantitiesPerEggType) {
-      $form['quantity'] = [
-        '#type' => 'number',
-        '#title' => $this->t('Quantity'),
-        '#required' => TRUE,
-        '#min' => 0,
-        '#step' => 1,
-      ];
-    }
+    $form['quantity'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Quantity'),
+      '#required' => TRUE,
+      '#min' => 0,
+      '#step' => 1,
+    ];
 
     // Load active assets with the "produces_eggs" field checked.
     $eggProducers = $this->entityTypeManager->getStorage('asset')->loadByProperties([
@@ -170,13 +159,6 @@ class Eggs extends QuickFormBase {
 
     // Quantity per egg type.
     $eggTypes = $this->eggsService->getEggTypes();
-    if ($this->requireQuantitiesPerEggType && empty($eggTypes)) {
-      $form['egg_types'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'p',
-        '#value' => $this->t("If you would like to set quantity for this egg harvest log add some 'Egg types' taxonomy terms or disable 'Require quantities per egg type' settings option."),
-      ];
-    }
     if (!empty($eggTypes)) {
       $form['egg_types'] = [
         '#type' => 'fieldset',
@@ -195,16 +177,29 @@ class Eggs extends QuickFormBase {
       }
     }
 
+    // If 'Require quantities per egg type' option is enabled adjust form.
+    if ($this->eggsService->requireQuantitiesPerEggType()) {
+      unset($form['quantity']);
+      if (empty($eggTypes)) {
+        $form['egg_types'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t("If you would like to set quantity for this egg harvest log add some 'Egg types' taxonomy terms or disable 'Require quantities per egg type' settings option."),
+        ];
+      }
+    }
+
     return $form;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    if ($this->requireQuantitiesPerEggType) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    // If 'Require quantities per egg type' option is enabled make sure at least one quantity value was provided.
+    if ($this->eggsService->requireQuantitiesPerEggType()) {
       $hasQuantity = FALSE;
-      foreach($form_state->getValues() as $key => $value) {
+      foreach ($form_state->getValues() as $key => $value) {
         if (
           strpos($key, '_quantity') === FALSE
           || empty($value)
@@ -223,24 +218,50 @@ class Eggs extends QuickFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-
     // Get selected assets ids.
-    $assets = array_keys(array_filter($form_state->getValue('assets')));
+    $assets = [];
+    if (is_array($form_state->getValue('assets'))) {
+      $assets = array_keys(array_filter($form_state->getValue('assets')));
+    }
 
     // Prepare quantities.
-    $quantities = [];
-    $totalQuantity = 0;
-    if (!$this->requireQuantitiesPerEggType) {
-      $quantities = [
-        [
-          'measure' => 'count',
-          'value' => $form_state->getValue('quantity'),
-          'units' => (string) $this->t('egg(s)'),
-        ],
-      ];
-      $totalQuantity = intval($form_state->getValue('quantity'));
+    $quantities = $this->prepareQuantities($form, $form_state);
+
+    // Prepare total quantity value.
+    if ($this->eggsService->requireQuantitiesPerEggType()) {
+      // If 'Require quantities per egg type' option is enabled sum all quantities values.
+      $totalQuantity = array_reduce($quantities, fn($total, $quantity) => $total + $quantity['value'], 0);
     }
-    foreach($form_state->getValues() as $key => $value) {
+    else {
+      // By default get value of the main quantity.
+      $totalQuantity = $quantities[0]['value'];
+    }
+
+    // Prepare timestamp value.
+    $timestamp = $this->requestTimestamp;
+    if ($form_state->getValue('timestamp') instanceof DrupalDateTime) {
+      $timestamp = $form_state->getValue('timestamp')->getTimestamp();
+    }
+
+    // Create a new egg harvest log.
+    $this->createLog([
+      'type' => 'harvest',
+      'timestamp' => $timestamp,
+      'name' => $this->eggsService->getEggHarvestLogName($totalQuantity),
+      'asset' => $assets,
+      'quantity' => $quantities,
+      'category' => $this->eggsService->getEggsLogCategory(),
+    ]);
+  }
+
+  /**
+   * Prepare quantities values for egg harvest log.
+   */
+  protected function prepareQuantities(array $form, FormStateInterface $form_state): array {
+    $quantities = [];
+
+    // Prepare quantities per egg type.
+    foreach ($form_state->getValues() as $key => $value) {
       if (
         strpos($key, '_quantity') === FALSE
         || empty($value)
@@ -253,22 +274,24 @@ class Eggs extends QuickFormBase {
         'units' => (string) $this->t('egg(s)'),
         'label' => $form['egg_types'][$key]['#title'],
       ];
-      $totalQuantity += (int) $value;
-    }
-    if (count($quantities) > 1 && !$this->requireQuantitiesPerEggType) {
-      $quantities[0]['label'] = $this->t('Total');
     }
 
-    // Create a new egg harvest log.
-    $this->createLog([
-      'type' => 'harvest',
-      'timestamp' => $form_state->getValue('timestamp')->getTimestamp(),
-      'name' => $this->eggsService->getEggHarvestLogName($totalQuantity),
-      'asset' => $assets,
-      'quantity' => $quantities,
-      'category' => $this->eggsService->getEggsLogCategory(),
-    ]);
+    // If 'Require quantities per egg type' option is disabled prepare main quantity value.
+    if (!$this->eggsService->requireQuantitiesPerEggType()) {
+      $mainQuantity = [
+        'measure' => 'count',
+        'value' => $form_state->getValue('quantity'),
+        'units' => (string) $this->t('egg(s)'),
+      ];
+      // If some quantities per egg type were entered label the main one as 'Total'.
+      if (count($quantities) > 0) {
+        $mainQuantity['label'] = $this->t('Total');
+      }
+      // Put main quantity as the first one.
+      array_unshift($quantities, $mainQuantity);
+    }
 
+    return $quantities;
   }
 
 }

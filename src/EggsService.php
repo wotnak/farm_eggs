@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\farm_eggs;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -27,14 +29,21 @@ class EggsService implements EggsServiceInterface {
   protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
+   * The module config.
+   */
+  protected ImmutableConfig $config;
+
+  /**
    * Constructs an EggsService object.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     TranslationInterface $string_translation,
+    ConfigFactoryInterface $config_factory,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->stringTranslation = $string_translation;
+    $this->config = $config_factory->get('farm_eggs.settings');
   }
 
   /**
@@ -72,6 +81,13 @@ class EggsService implements EggsServiceInterface {
       'vid' => self::EGG_TYPE_TAXONOMY_ID,
       'status' => 1,
     ]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function requireQuantitiesPerEggType(): bool {
+    return (bool) $this->config->get('require_quantities_per_egg_type');
   }
 
   /**

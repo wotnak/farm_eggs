@@ -1,4 +1,4 @@
 services:
   farm_eggs.eggs_service:
     class: Drupal\farm_eggs\EggsService
-    arguments: ['@entity_type.manager', '@string_translation']
+    arguments: ['@entity_type.manager', '@string_translation', '@config.factory']

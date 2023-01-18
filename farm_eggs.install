@@ -34,7 +34,7 @@ function farm_eggs_update_9001(): void {
   $query->condition('name', $nameParts[0], 'STARTS_WITH');
   $query->condition('name', $nameParts[1], 'ENDS_WITH');
   $logsIds = $query->execute();
-  if (empty($logsIds)) {
+  if (!is_array($logsIds) || empty($logsIds)) {
     return;
   }
 
@@ -44,6 +44,7 @@ function farm_eggs_update_9001(): void {
   foreach ($logs as $log) {
     $values = [];
     if (!$log->get('category')->isEmpty()) {
+      /** @var array */
       $values = $log->get('category')->getValue();
     }
     $values[] = ['target_id' => $eggsCategory->id()];
