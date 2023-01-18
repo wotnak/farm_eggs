@@ -1,0 +1,3 @@
+farm_eggs:
+  config_permissions:
+    - administer farm_eggs

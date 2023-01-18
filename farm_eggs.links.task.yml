@@ -1,0 +1,5 @@
+farm_eggs.settings:
+  base_route: farm_settings.settings_page
+  route_name: farm_eggs.settings
+  title: 'Eggs'
+  weight: 10

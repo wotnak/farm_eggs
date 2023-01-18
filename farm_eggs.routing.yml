@@ -1,0 +1,7 @@
+farm_eggs.settings:
+  path: 'farm/settings/eggs'
+  defaults:
+    _form: '\Drupal\farm_eggs\Form\FarmEggsSettingsForm'
+    _title: 'Farm Eggs settings'
+  requirements:
+    _permission: 'administer farm_eggs'

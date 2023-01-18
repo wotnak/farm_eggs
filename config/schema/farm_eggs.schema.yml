@@ -1,0 +1,7 @@
+farm_eggs.settings:
+  type: config_object
+  label: 'Farm Eggs settings'
+  mapping:
+    require_quantities_per_egg_type:
+      type: boolean
+      label: 'Require quantities per egg type'

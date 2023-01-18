@@ -8,3 +8,4 @@ dependencies:
   - farm:farm_animal
   - farm:farm_harvest
   - farm:farm_quick
+configure: farm_eggs.settings
