@@ -12,6 +12,11 @@ use Drupal\taxonomy\TermInterface;
 interface EggsServiceInterface {
 
   /**
+   * Egg types taxonomy id.
+   */
+  public const EGG_TYPE_TAXONOMY_ID = 'egg_type';
+
+  /**
    * Get log category used to tag egg harvest logs.
    */
   public function getEggsLogCategory(): TermInterface;
@@ -20,5 +25,13 @@ interface EggsServiceInterface {
    * Get egg harvest log name.
    */
   public function getEggHarvestLogName(int $quantity): string;
+
+  /**
+   * Get available egg types.
+   *
+   * @return \Drupal\taxonomy\TermInterface[]
+   *   List of published taxonomy term from Egg types vocabulary.
+   */
+  public function getEggTypes(): array;
 
 }

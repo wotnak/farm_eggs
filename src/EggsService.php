@@ -65,6 +65,16 @@ class EggsService implements EggsServiceInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getEggTypes(): array {
+    return $this->entityTypeManager->getStorage('taxonomy_term')->loadByProperties([
+      'vid' => self::EGG_TYPE_TAXONOMY_ID,
+      'status' => 1,
+    ]);
+  }
+
+  /**
    * Get eggs log category name.
    */
   protected function getEggsCategoryName(): string {

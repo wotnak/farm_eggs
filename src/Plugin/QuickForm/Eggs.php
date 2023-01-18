@@ -158,6 +158,26 @@ class Eggs extends QuickFormBase {
       );
     }
 
+    // Quantity per egg type.
+    $eggTypes = $this->eggsService->getEggTypes();
+    if (!empty($eggTypes)) {
+      $form['egg_types'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Egg types'),
+        '#description' => $this->t('Optionally provide quantities per egg type.'),
+        '#description_display' => 'before',
+      ];
+      foreach ($eggTypes as $type) {
+        $form['egg_types'][$type->id() . '_quantity'] = [
+          '#type' => 'number',
+          '#title' => $type->label(),
+          '#description' => $type->getDescription(),
+          '#min' => 0,
+          '#step' => 1,
+        ];
+      }
+    }
+
     return $form;
   }
 
@@ -169,19 +189,39 @@ class Eggs extends QuickFormBase {
     // Get selected assets ids.
     $assets = array_keys(array_filter($form_state->getValue('assets')));
 
+    // Prepare quantities.
+    $quantities = [
+      [
+        'measure' => 'count',
+        'value' => $form_state->getValue('quantity'),
+        'units' => (string) $this->t('egg(s)'),
+      ],
+    ];
+    foreach($form_state->getValues() as $key => $value) {
+      if (
+        strpos($key, '_quantity') === FALSE
+        || empty($form_state->getValue($key))
+      ) {
+        continue;
+      }
+      $quantities[] = [
+        'measure' => 'count',
+        'value' => $form_state->getValue($key),
+        'units' => (string) $this->t('egg(s)'),
+        'label' => $form['egg_types'][$key]['#title'],
+      ];
+    }
+    if (count($quantities) > 1) {
+      $quantities[0]['label'] = $this->t('Total');
+    }
+
     // Create a new egg harvest log.
     $this->createLog([
       'type' => 'harvest',
       'timestamp' => $form_state->getValue('timestamp')->getTimestamp(),
       'name' => $this->eggsService->getEggHarvestLogName(intval($form_state->getValue('quantity'))),
       'asset' => $assets,
-      'quantity' => [
-        [
-          'measure' => 'count',
-          'value' => $form_state->getValue('quantity'),
-          'units' => (string) $this->t('egg(s)'),
-        ],
-      ],
+      'quantity' => $quantities,
       'category' => $this->eggsService->getEggsLogCategory(),
     ]);
 

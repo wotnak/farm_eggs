@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - farm_eggs
+name: 'Egg types'
+vid: egg_type
+description: 'A list of egg types.'
+weight: 0
