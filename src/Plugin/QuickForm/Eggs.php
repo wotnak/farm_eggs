@@ -177,14 +177,14 @@ class Eggs extends QuickFormBase {
       }
     }
 
-    // If 'Require quantities per egg type' option is enabled adjust form.
-    if ($this->eggsService->requireQuantitiesPerEggType()) {
+    // Adjust form for detailed workflow.
+    if ($this->eggsService->isDetailedWorkflow()) {
       unset($form['quantity']);
       if (empty($eggTypes)) {
         $form['egg_types'] = [
           '#type' => 'html_tag',
           '#tag' => 'p',
-          '#value' => $this->t("If you would like to set quantity for this egg harvest log add some 'Egg types' taxonomy terms or disable 'Require quantities per egg type' settings option."),
+          '#value' => $this->t("To set quantity for this egg harvest log add some 'Egg types' taxonomy terms or switch back to 'Simple' egg harvest workflow."),
         ];
       }
     }
@@ -196,8 +196,8 @@ class Eggs extends QuickFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    // If 'Require quantities per egg type' option is enabled make sure at least one quantity value was provided.
-    if ($this->eggsService->requireQuantitiesPerEggType()) {
+    // For detailed workflow make sure at least one subtotal quantity value is provided.
+    if ($this->eggsService->isDetailedWorkflow()) {
       $hasQuantity = FALSE;
       foreach ($form_state->getValues() as $key => $value) {
         if (
@@ -228,8 +228,8 @@ class Eggs extends QuickFormBase {
     $quantities = $this->prepareQuantities($form, $form_state);
 
     // Prepare total quantity value.
-    if ($this->eggsService->requireQuantitiesPerEggType()) {
-      // If 'Require quantities per egg type' option is enabled sum all quantities values.
+    if ($this->eggsService->isDetailedWorkflow()) {
+      // For detailed workflow sum all quantities values.
       $totalQuantity = array_reduce($quantities, fn($total, $quantity) => $total + $quantity['value'], 0);
     }
     else {
@@ -276,8 +276,8 @@ class Eggs extends QuickFormBase {
       ];
     }
 
-    // If 'Require quantities per egg type' option is disabled prepare main quantity value.
-    if (!$this->eggsService->requireQuantitiesPerEggType()) {
+    // For simple workflow prepare main quantity value.
+    if ($this->eggsService->isSimpleWorkflow()) {
       $mainQuantity = [
         'measure' => 'count',
         'value' => $form_state->getValue('quantity'),

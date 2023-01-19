@@ -17,6 +17,16 @@ interface EggsServiceInterface {
   public const EGG_TYPE_TAXONOMY_ID = 'egg_type';
 
   /**
+   * Simple workflow id.
+   */
+  public const WORKFLOW_SIMPLE = 'simple';
+
+  /**
+   * Detailed workflow id.
+   */
+  public const WORKFLOW_DETAILED = 'detailed';
+
+  /**
    * Get log category used to tag egg harvest logs.
    */
   public function getEggsLogCategory(): TermInterface;
@@ -35,8 +45,18 @@ interface EggsServiceInterface {
   public function getEggTypes(): array;
 
   /**
-   * Checks if 'Require quantities per egg type' option enabled.
+   * Checks if detailed workflow is activated.
    */
-  public function requireQuantitiesPerEggType(): bool;
+  public function isDetailedWorkflow(): bool;
+
+  /**
+   * Checks if simple workflow is activated.
+   */
+  public function isSimpleWorkflow(): bool;
+
+  /**
+   * Get currently active workflow type.
+   */
+  public function getActiveWorkflow(): EggHarvestWorkflow;
 
 }

@@ -86,8 +86,24 @@ class EggsService implements EggsServiceInterface {
   /**
    * {@inheritdoc}
    */
-  public function requireQuantitiesPerEggType(): bool {
-    return (bool) $this->config->get('require_quantities_per_egg_type');
+  public function isDetailedWorkflow(): bool {
+    return $this->getActiveWorkflow() === EggHarvestWorkflow::DETAILED;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isSimpleWorkflow(): bool {
+    return $this->getActiveWorkflow() === EggHarvestWorkflow::SIMPLE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getActiveWorkflow(): EggHarvestWorkflow {
+    $workflowId = strval($this->config->get('workflow'));
+    $workflow = EggHarvestWorkflow::tryFrom($workflowId);
+    return $workflow ?? EggHarvestWorkflow::default();
   }
 
   /**

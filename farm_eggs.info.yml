@@ -9,3 +9,4 @@ dependencies:
   - farm:farm_harvest
   - farm:farm_quick
 configure: farm_eggs.settings
+php: 8.1
