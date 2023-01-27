@@ -7,15 +7,6 @@
 
 declare(strict_types=1);
 
-use Drupal\farm_eggs\EggsServiceInterface;
-
-/**
- * Implements hook_install().
- */
-function farm_eggs_install(): void {
-  farm_eggs_update_9002();
-}
-
 /**
  * Tag existing egg harvest logs with Eggs category.
  */
@@ -50,38 +41,5 @@ function farm_eggs_update_9001(): void {
     $values[] = ['target_id' => $eggsCategory->id()];
     $log->set('category', $values);
     $log->save();
-  }
-}
-
-/**
- * Add default egg types taxonomy terms.
- */
-function farm_eggs_update_9002(): void {
-
-  // Egg type taxonomy id.
-  $taxonomyId = EggsServiceInterface::EGG_TYPE_TAXONOMY_ID;
-
-  // Make sure taxonomy exists.
-  $taxonomy = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->load($taxonomyId);
-  if ($taxonomy === NULL) {
-    \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary')->create([
-      'name' => t('Egg types'),
-      'vid' => $taxonomyId,
-      'description' => t('A list of egg types.'),
-    ])->save();
-  }
-
-  // Egg types to be added.
-  $eggTypes = [
-    'Cracked',
-    'Dirty',
-  ];
-
-  // Create taxonomy terms for all default egg types.
-  foreach ($eggTypes as $type) {
-    \Drupal::entityTypeManager()->getStorage('taxonomy_term')->create([
-      'vid' => $taxonomyId,
-      'name' => $type,
-    ])->save();
   }
 }
