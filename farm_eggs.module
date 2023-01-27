@@ -30,3 +30,25 @@ function farm_eggs_farm_entity_bundle_field_info(EntityTypeInterface $entity_typ
   }
   return $fields;
 }
+
+/**
+ * Implements hook_gin_content_form_routes().
+ *
+ * Improve egg harvest form layout.
+ */
+function farm_eggs_gin_content_form_routes(): array {
+  return [
+    'farm.quick.eggs',
+  ];
+}
+
+/**
+ * Implements hook_theme();
+ */
+function farm_eggs_theme() {
+  return [
+    'node_edit_form' => [
+      'render element' => 'form',
+    ],
+  ];
+}

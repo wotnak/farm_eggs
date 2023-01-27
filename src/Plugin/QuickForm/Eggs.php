@@ -121,14 +121,6 @@ class Eggs extends QuickFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
 
-    // Harvest timestamp.
-    $form['timestamp'] = [
-      '#type' => 'datetime',
-      '#title' => $this->t('Timestamp'),
-      '#default_value' => DrupalDateTime::createFromTimestamp($this->requestTimestamp),
-      '#required' => TRUE,
-    ];
-
     // Quantity.
     $form['quantity'] = [
       '#type' => 'number',
@@ -200,6 +192,30 @@ class Eggs extends QuickFormBase {
       }
     }
 
+    // Sidebar.
+    $form['advanced'] = [
+      '#type' => 'container',
+    ];
+    $form['meta'] = [
+      '#type' => 'container',
+      '#group' => 'advanced',
+      '#attributes' => ['class' => ['entity-meta__header']],
+    ];
+
+    // Harvest timestamp.
+    $form['meta']['timestamp'] = [
+      '#type' => 'datetime',
+      '#title' => $this->t('Timestamp'),
+      '#default_value' => DrupalDateTime::createFromTimestamp($this->requestTimestamp),
+      '#required' => TRUE,
+    ];
+
+    // Notes.
+    $form['meta']['notes'] = [
+      '#type' => 'text_format',
+      '#title' => $this->t('Notes'),
+    ];
+
     return $form;
   }
 
@@ -241,11 +257,11 @@ class Eggs extends QuickFormBase {
     // Prepare total quantity value.
     if ($this->eggsService->isDetailedWorkflow()) {
       // For detailed workflow sum all quantities values.
-      $totalQuantity = array_reduce($quantities, fn($total, $quantity) => $total + $quantity['value'], 0);
+      $totalQuantity = intval(array_reduce($quantities, fn($total, $quantity) => $total + $quantity['value'], 0));
     }
     else {
       // By default get value of the main quantity.
-      $totalQuantity = $quantities[0]['value'];
+      $totalQuantity = intval($quantities[0]['value']);
     }
 
     // Prepare timestamp value.
@@ -265,6 +281,12 @@ class Eggs extends QuickFormBase {
       }
     }
 
+    // Prepare notes.
+    $notes = NULL;
+    if (!empty($form_state->getValue('notes'))) {
+      $notes = $form_state->getValue('notes');
+    }
+
     // Create a new egg harvest log.
     $this->createLog([
       'type' => 'harvest',
@@ -274,6 +296,7 @@ class Eggs extends QuickFormBase {
       'quantity' => $quantities,
       'category' => $this->eggsService->getEggsLogCategory(),
       'location' => $locations,
+      'notes' => $notes,
     ]);
   }
 
