@@ -7,7 +7,32 @@
 
 declare(strict_types=1);
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function farm_eggs_help(string $route_name, RouteMatchInterface $route_match): string {
+  if ($route_name !== 'help.page.farm_eggs') {
+    return '';
+  }
+  $text = file_get_contents(__DIR__ . '/README.md');
+  if ($text === FALSE) {
+    return '';
+  }
+  if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
+    return '<pre>' . Html::escape($text) . '</pre>';
+  }
+  // Use the Markdown filter to render the README.
+  $filter_manager = \Drupal::service('plugin.manager.filter');
+  $settings = \Drupal::configFactory()->get('markdown.settings')->getRawData();
+  $config = ['settings' => $settings];
+  /** @var \Drupal\filter\Plugin\FilterInterface */
+  $filter = $filter_manager->createInstance('markdown', $config);
+  return $filter->process($text, 'en');
+}
 
 /**
  * Implements hook_farm_entity_bundle_field_info().

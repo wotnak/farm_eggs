@@ -1,5 +1,5 @@
 name: farmOS Eggs
-description: Provides a simple UI for creating egg harvest logs.
+description: Provides functionalities for tracking egg harvests.
 type: module
 package: farmOS Contrib
 core_version_requirement: ^9 || ^10
