@@ -4,9 +4,10 @@ type: module
 package: farmOS Contrib
 core_version_requirement: ^9 || ^10
 dependencies:
-  - farm:farm_group
-  - farm:farm_animal
-  - farm:farm_harvest
-  - farm:farm_quick
+  - farm_group
+  - farm_animal
+  - farm_harvest
+  - farm_quick
+  - farm_settings
 configure: farm_eggs.settings
 php: 8.1
