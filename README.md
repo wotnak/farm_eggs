@@ -14,6 +14,10 @@ distribution.
   - simple (default) - total egg quantity required, quantities per egg type optional,
   - detailed - quantities per egg type required, total egg quantity calculated automatically.
 
+## Development roadmap
+
+<https://github.com/users/wotnak/projects/1>
+
 ## Installation
 
 Install as you would normally install a contributed drupal module. See:
