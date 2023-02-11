@@ -328,11 +328,8 @@ class Eggs extends QuickFormBase {
         'measure' => 'count',
         'value' => $form_state->getValue('quantity'),
         'units' => (string) $this->t('egg(s)'),
+        'label' => $this->t('Total'),
       ];
-      // If some quantities per egg type were entered label the main one as 'Total'.
-      if (count($quantities) > 0) {
-        $mainQuantity['label'] = $this->t('Total');
-      }
       // Put main quantity as the first one.
       array_unshift($quantities, $mainQuantity);
     }
