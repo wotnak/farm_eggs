@@ -1,15 +1,15 @@
 # farmOS Eggs
 
-Provides functionalities for tracking egg harvests.
-
-This module is an add-on for the [farmOS](http://drupal.org/project/farm)
+Add-on module for the [farmOS](http://drupal.org/project/farm)
 distribution.
+
+It provides functionalities for tracking egg harvests.
 
 ## Features
 
 - Quick form for recording egg harvests.
 - Option to mark animal/group assets as producing eggs.
-- Option to record quantities per egg types in single egg harvest.
+- Option to record quantities per defined egg types.
 - Two egg harvest recording workflows:
   - simple (default) - total egg quantity required, quantities per egg type optional,
   - detailed - quantities per egg type required, total egg quantity calculated automatically.
