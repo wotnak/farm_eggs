@@ -15,6 +15,8 @@ use Drupal\farm_location\AssetLocationInterface;
 use Drupal\farm_quick\Plugin\QuickForm\QuickFormBase;
 use Drupal\farm_quick\Traits\QuickLogTrait;
 use Psr\Container\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Eggs harvest quick form.
@@ -54,6 +56,11 @@ class Eggs extends QuickFormBase {
   protected AssetLocationInterface $assetLocation;
 
   /**
+   * The current request.
+   */
+  protected Request $request;
+
+  /**
    * Constructs a Eggs object.
    *
    * @param array $configuration
@@ -85,6 +92,7 @@ class Eggs extends QuickFormBase {
     EggsServiceInterface $eggs_service,
     TimeInterface $time,
     AssetLocationInterface $asset_location,
+    RequestStack $request_stack,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $messenger);
     $this->stringTranslation = $string_translation;
@@ -92,6 +100,7 @@ class Eggs extends QuickFormBase {
     $this->eggsService = $eggs_service;
     $this->requestTimestamp = $time->getRequestTime();
     $this->assetLocation = $asset_location;
+    $this->request = $request_stack->getCurrentRequest();
   }
 
   /**
@@ -113,6 +122,7 @@ class Eggs extends QuickFormBase {
       $container->get('farm_eggs.eggs_service'),
       $container->get('datetime.time'),
       $container->get('asset.location'),
+      $container->get('request_stack'),
     );
   }
 
@@ -146,8 +156,16 @@ class Eggs extends QuickFormBase {
         '#options' => $assetsOptions,
       ];
 
+      // Select asset provided as query param.
+      $asset = $this->request->query->get('asset');
+      if (
+        $asset !== NULL
+        && in_array($asset, array_keys($assetsOptions))
+      ) {
+        $form['assets']['#default_value'] = [intval($asset)];
+      }
       // If there is only one option, select it by default.
-      if (count($assetsOptions) === 1) {
+      elseif (count($assetsOptions) === 1) {
         $form['assets']['#default_value'] = array_keys($assetsOptions);
       }
     }

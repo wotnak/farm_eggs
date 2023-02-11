@@ -50,6 +50,13 @@ function farm_eggs_farm_entity_bundle_field_info(EntityTypeInterface $entity_typ
         'form' => 30,
         'view' => -30,
       ],
+      'view_display_options' => [
+        'label' => 'inline',
+        'type' => 'asset_produces_eggs',
+        'settings' => [
+          'record_egg_harvest_button' => TRUE,
+        ],
+      ],
     ];
     $fields['produces_eggs'] = \Drupal::service('farm_field.factory')->bundleFieldDefinition($options);
   }
