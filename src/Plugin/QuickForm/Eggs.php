@@ -32,17 +32,13 @@ class Eggs extends QuickFormBase {
 
   /**
    * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The request stack.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
    */
-  protected $requestStack;
+  protected RequestStack $requestStack;
 
   /**
    * Constructs a Eggs object.
@@ -60,7 +56,7 @@ class Eggs extends QuickFormBase {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *  The request stack.
+   *   The request stack.
    */
   public function __construct(
     array $configuration,
@@ -121,12 +117,12 @@ class Eggs extends QuickFormBase {
 
     // If there are asset options, add checkboxes.
     if (!empty($assetsOptions)) {
-      $form['assets'] = array(
+      $form['assets'] = [
         '#type' => 'checkboxes',
         '#title' => $this->t('Layer asset'),
         '#description' => $this->t('Select the layer asset that these eggs came from. To add to this list, edit their record and check the "Produces eggs" checkbox.'),
         '#options' => $assetsOptions,
-      );
+      ];
 
       // If there is only one option, select it by default.
       if (count($assetsOptions) === 1) {
@@ -145,12 +141,12 @@ class Eggs extends QuickFormBase {
     }
     // Otherwise, show some text about adding assets.
     else {
-      $form['assets'] = array(
+      $form['assets'] = [
         '#type' => 'markup',
         '#markup' => $this->t('If you would like to associate this egg harvest log with an asset, edit their record and check the "Produces eggs" checkbox. Then you will be able to select them here.'),
         '#prefix' => '<p>',
         '#suffix' => '</p>',
-      );
+      ];
     }
 
     return $form;

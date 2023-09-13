@@ -1,0 +1,8 @@
+farm_eggs.record_egg_harvest:
+  route_name: farm.quick.eggs
+  title: 'Record egg harvest'
+  appears_on:
+    - entity.asset.canonical
+    - view.farm_log.page_asset
+  class: Drupal\farm_eggs\Plugin\Menu\LocalAction\RecordEggHarvestLocalAction
+  weight: 50

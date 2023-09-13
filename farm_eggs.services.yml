@@ -1,0 +1,3 @@
+services:
+  farm_eggs.eggs:
+    class: Drupal\farm_eggs\Eggs

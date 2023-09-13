@@ -7,7 +7,10 @@
 
 declare(strict_types=1);
 
+use Drupal\asset\Entity\AssetInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_farm_entity_bundle_field_info().
@@ -25,8 +28,71 @@ function farm_eggs_farm_entity_bundle_field_info(EntityTypeInterface $entity_typ
         'form' => 30,
         'view' => -30,
       ],
+      'view_display_options' => [
+        'label' => 'inline',
+        'type' => 'asset_produces_eggs',
+        'settings' => [
+          'record_egg_harvest_button' => TRUE,
+        ],
+      ],
     ];
     $fields['produces_eggs'] = \Drupal::service('farm_field.factory')->bundleFieldDefinition($options);
   }
   return $fields;
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for farm_local_actions_block block.
+ *
+ * Hide the 'Record eggs harvest' action on assets not marked as producing eggs.
+ *
+ * @todo Replace with a hook introduced in https://www.drupal.org/project/drupal/issues/2585169.
+ */
+function farm_eggs_preprocess_block__farm_local_actions_block(array &$variables): void {
+  // Get the asset from the route.
+  $asset = \Drupal::routeMatch()->getParameter('asset');
+  if ($asset !== NULL && !$asset instanceof AssetInterface) {
+    $assetId = strval($asset);
+    $asset = \Drupal::entityTypeManager()->getStorage('asset')->load($assetId);
+  }
+  // If we have an asset and it produces eggs, do nothing.
+  if (
+    $asset instanceof AssetInterface
+    && \Drupal::service('farm_eggs.eggs')->producesEggs($asset)
+  ) {
+    return;
+  }
+  // Otherwise remove the 'Record egg harvest' action.
+  foreach ($variables['content']['#links'] as $key => $value) {
+    if (
+      $value['url'] instanceof Url
+      && $value['url']->getRouteName() === 'farm.quick.eggs'
+    ) {
+      unset($variables['content']['#links'][$key]);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_operation().
+ *
+ * Adds 'Record egg harvest' operation for assets marked as producing eggs.
+ */
+function farm_eggs_entity_operation(EntityInterface $entity): array {
+  $operations = [];
+  if ($entity instanceof AssetInterface && \Drupal::service('farm_eggs.eggs')->producesEggs($entity)) {
+    $operations['record_egg_harvest'] = [
+      'title' => \t('Record egg harvest'),
+      'url' => Url::fromRoute(
+        'farm.quick.eggs',
+        [
+          'assets' => $entity->id(),
+          'destination' => Url::fromRoute(\Drupal::routeMatch()->getRouteName(), \Drupal::routeMatch()->getRawParameters()->all(), ['query' => \Drupal::routeMatch()])->toString(),
+        ],
+      ),
+      'weight' => 50,
+    ];
+  }
+  Url::createFromRequest(\Drupal::request());
+  return $operations;
 }
